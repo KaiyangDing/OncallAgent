@@ -21,10 +21,19 @@ uv run ruff format .  # 代码格式化
 
 PyCharm 用户:将解释器指向 `.venv\Scripts\python.exe`。
 
+## 运行服务
+
+```bash
+uv run uvicorn oncall_agent.main:app --reload
+```
+
+- 健康检查:http://127.0.0.1:8000/health
+- API 文档:http://127.0.0.1:8000/docs
+
 ## 里程碑进度
 
 - [x] M0 仓库初始化(uv + ruff + pytest 工具链)
-- [ ] M1 配置与最小可运行服务
+- [x] M1 配置与最小可运行服务(settings / 日志 / 应用工厂 / 健康检查 / 统一响应)
 - [ ] M2 向量层(知识库管线)
 - [ ] M3 RAG 对话 Agent
 - [ ] M4 Mock MCP 服务器与工具接入
