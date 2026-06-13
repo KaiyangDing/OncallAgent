@@ -35,3 +35,10 @@ class HealthData(BaseModel):
     service: str
     version: str
     status: str
+
+
+class DocumentIndexedData(BaseModel):
+    """文档索引结果载荷。"""
+
+    source: str
+    chunks: int

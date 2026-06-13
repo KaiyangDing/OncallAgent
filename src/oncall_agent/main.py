@@ -11,8 +11,13 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from loguru import logger
 
-from oncall_agent.api import health
+from oncall_agent.api import documents, health
 from oncall_agent.api.schemas import ApiResponse
+from oncall_agent.dependencies import AppResources
+from oncall_agent.domain.knowledge.indexer import IndexingService
+from oncall_agent.domain.knowledge.splitter import DocumentSplitter
+from oncall_agent.infra.embeddings import EmbeddingService
+from oncall_agent.infra.milvus import MilvusStore
 from oncall_agent.logging import setup_logging
 from oncall_agent.settings import Settings, get_settings
 
@@ -24,8 +29,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     setup_logging(settings)
     logger.info("{} v{} 启动中...", settings.app_name, settings.app_version)
 
+    # 装配 infra 与 domain 组件
+    embedding = EmbeddingService(settings)
+    store = MilvusStore(settings)
+    store.connect()
+    splitter = DocumentSplitter(
+        chunk_size=settings.chunk_size,
+        chunk_overlap=settings.chunk_overlap,
+        min_chunk_size=settings.min_chunk_size,
+    )
+    indexing_service = IndexingService(splitter, embedding, store)
+
+    app.state.resources = AppResources(indexing_service=indexing_service)
+    logger.info("资源装配完成")
+
     yield
 
+    store.close()
     logger.info("{} 已关闭", settings.app_name)
 
 
@@ -40,6 +60,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health.router)
+    app.include_router(documents.router)
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:

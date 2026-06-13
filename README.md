@@ -14,12 +14,22 @@
 
 ```bash
 uv sync               # 创建虚拟环境并安装全部依赖(含 dev)
+cp .env.example .env  # 填入 DASHSCOPE_API_KEY
 uv run pytest         # 运行测试
 uv run ruff check .   # 代码检查
 uv run ruff format .  # 代码格式化
 ```
 
 PyCharm 用户:将解释器指向 `.venv\Scripts\python.exe`。
+
+## 依赖服务
+
+向量库 Milvus 通过 Docker 启动:
+
+```bash
+docker compose up -d   # 启动 Milvus(数据持久化到 volumes/)
+docker compose down    # 停止
+```
 
 ## 运行服务
 
@@ -30,11 +40,21 @@ uv run uvicorn oncall_agent.main:app --reload
 - 健康检查:http://127.0.0.1:8000/health
 - API 文档:http://127.0.0.1:8000/docs
 
+## 知识库
+
+`knowledge_docs/` 存放运维知识文档(Markdown)。通过上传接口建立向量索引:
+
+```bash
+curl.exe -X POST "http://127.0.0.1:8000/api/documents" -F "file=@knowledge_docs/cpu_high_usage.md"
+```
+
+文档经「按标题分割 → 字符递归切分 → 同章节小块合并」切块,嵌入后写入 Milvus。
+
 ## 里程碑进度
 
 - [x] M0 仓库初始化(uv + ruff + pytest 工具链)
 - [x] M1 配置与最小可运行服务(settings / 日志 / 应用工厂 / 健康检查 / 统一响应)
-- [ ] M2 向量层(知识库管线)
+- [x] M2 向量层(嵌入 / Milvus 封装 / 文档分割 / 索引服务 / 上传接口)
 - [ ] M3 RAG 对话 Agent
 - [ ] M4 Mock MCP 服务器与工具接入
 - [ ] M5 诊断图(Plan-Execute-Replan)

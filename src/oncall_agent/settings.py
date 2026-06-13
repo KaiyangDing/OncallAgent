@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     milvus_port: int = 19530
     milvus_collection: str = "knowledge"
 
+    # 文档分割
+    chunk_size: int = 800
+    chunk_overlap: int = 100
+    min_chunk_size: int = 300
+
 
 @lru_cache
 def get_settings() -> Settings:
