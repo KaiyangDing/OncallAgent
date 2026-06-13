@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-v4"
     embedding_dim: int = 1024
 
+    # Milvus 向量库
+    milvus_host: str = "localhost"
+    milvus_port: int = 19530
+    milvus_collection: str = "knowledge"
+
 
 @lru_cache
 def get_settings() -> Settings:
