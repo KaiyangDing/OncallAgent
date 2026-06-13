@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 from fastapi import Request
 
+from oncall_agent.domain.chat.service import ChatService
 from oncall_agent.domain.knowledge.indexer import IndexingService
 
 
@@ -16,6 +17,7 @@ class AppResources:
     """应用启动时装配、整个生命周期复用的资源集合。"""
 
     indexing_service: IndexingService
+    chat_service: ChatService
 
 
 def get_resources(request: Request) -> AppResources:

@@ -50,12 +50,30 @@ curl.exe -X POST "http://127.0.0.1:8000/api/documents" -F "file=@knowledge_docs/
 
 文档经「按标题分割 → 字符递归切分 → 同章节小块合并」切块,嵌入后写入 Milvus。
 
+## 对话
+
+基于手搭的 LangGraph ReAct 循环图(model ↔ tools),支持知识库检索、多轮记忆与流式输出:
+
+```bash
+# 非流式
+curl.exe -X POST "http://127.0.0.1:8000/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "s1", "question": "CPU使用率过高怎么排查?"}'
+
+# 流式(SSE)
+curl.exe -N -X POST "http://127.0.0.1:8000/api/chat/stream" \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "s1", "question": "服务不可用如何处理?"}'
+```
+
+同一 `session_id` 的多轮对话共享上下文;历史超出上限时自动修剪最旧消息。
+
 ## 里程碑进度
 
 - [x] M0 仓库初始化(uv + ruff + pytest 工具链)
 - [x] M1 配置与最小可运行服务(settings / 日志 / 应用工厂 / 健康检查 / 统一响应)
 - [x] M2 向量层(嵌入 / Milvus 封装 / 文档分割 / 索引服务 / 上传接口)
-- [ ] M3 RAG 对话 Agent
+- [x] M3 RAG 对话 Agent(ReAct 循环图 / 知识检索工具 / 多轮记忆 / 消息修剪 / 流式 SSE)
 - [ ] M4 Mock MCP 服务器与工具接入
 - [ ] M5 诊断图(Plan-Execute-Replan)
 - [ ] M6 前端适配与收尾

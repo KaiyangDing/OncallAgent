@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     chunk_overlap: int = 100
     min_chunk_size: int = 300
 
+    # RAG 检索
+    retrieval_top_k: int = 3
+    chat_max_history: int = 20
+
 
 @lru_cache
 def get_settings() -> Settings:

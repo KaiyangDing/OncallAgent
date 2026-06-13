@@ -42,3 +42,16 @@ class DocumentIndexedData(BaseModel):
 
     source: str
     chunks: int
+
+
+class ChatRequest(BaseModel):
+    """对话请求。"""
+
+    session_id: str
+    question: str
+
+
+class ChatData(BaseModel):
+    """对话回答载荷。"""
+
+    answer: str
