@@ -1,0 +1,6 @@
+# 仓库内统一 LF,避免 Windows/macOS 协作时的换行符混乱
+* text=auto eol=lf
+
+# Windows 批处理必须 CRLF 才能正确执行
+*.bat text eol=crlf
+*.cmd text eol=crlf
