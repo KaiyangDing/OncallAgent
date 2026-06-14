@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from fastapi import Request
 
 from oncall_agent.domain.chat.service import ChatService
+from oncall_agent.domain.diagnosis.service import DiagnosisService
 from oncall_agent.domain.knowledge.indexer import IndexingService
 
 
@@ -18,6 +19,7 @@ class AppResources:
 
     indexing_service: IndexingService
     chat_service: ChatService
+    diagnosis_service: DiagnosisService
 
 
 def get_resources(request: Request) -> AppResources:

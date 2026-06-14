@@ -12,11 +12,12 @@ from fastapi.responses import JSONResponse
 from langgraph.checkpoint.memory import MemorySaver
 from loguru import logger
 
-from oncall_agent.api import chat, documents, health
+from oncall_agent.api import chat, diagnosis, documents, health
 from oncall_agent.api.schemas import ApiResponse
 from oncall_agent.dependencies import AppResources
 from oncall_agent.domain.chat.service import ChatService
 from oncall_agent.domain.chat.tools import make_knowledge_tool
+from oncall_agent.domain.diagnosis.service import DiagnosisService
 from oncall_agent.domain.knowledge.indexer import IndexingService
 from oncall_agent.domain.knowledge.retriever import RetrievalService
 from oncall_agent.domain.knowledge.splitter import DocumentSplitter
@@ -58,9 +59,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         chat_model, chat_tools, checkpointer, max_history=settings.chat_max_history
     )
 
+    # 装配诊断 Agent(复用同一套工具与检索;诊断不需要流式模型与会话记忆)
+    diagnosis_model = create_chat_model(settings, streaming=False)
+    diagnosis_service = DiagnosisService(diagnosis_model, chat_tools, retrieval)
+
     app.state.resources = AppResources(
         indexing_service=indexing_service,
         chat_service=chat_service,
+        diagnosis_service=diagnosis_service,
     )
     logger.info("资源装配完成")
 
@@ -83,6 +89,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(documents.router)
     app.include_router(chat.router)
+    app.include_router(diagnosis.router)
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
