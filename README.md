@@ -49,6 +49,7 @@ uv run python -m mcp_servers.logs_server      # 日志查询,端口 8002
 uv run uvicorn oncall_agent.main:app --reload
 ```
 
+- **Web 界面**:http://127.0.0.1:8000/(对话 / 一键诊断 / 上传文档)
 - 健康检查:http://127.0.0.1:8000/health
 - API 文档:http://127.0.0.1:8000/docs
 
@@ -129,4 +130,4 @@ uv run ruff format .  # 代码格式化
 - [x] M3 RAG 对话 Agent(ReAct 循环图 / 知识检索工具 / 多轮记忆 / 消息修剪 / 流式 SSE)
 - [x] M4 Mock MCP 服务器(告警 / 指标 / 日志,故事线对齐 / 失败降级可恢复)
 - [x] M5 AIOps 诊断图(Plan-Execute-Replan / 结构化决策 / 步数护栏 / 工具容错)
-- [ ] M6 前端适配与收尾
+- [x] M6 前端与收尾(精简单页 Web:流式对话 / 一键诊断 / 文档上传)

@@ -8,7 +8,8 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from langgraph.checkpoint.memory import MemorySaver
 from loguru import logger
 
@@ -90,6 +91,13 @@ def create_app() -> FastAPI:
     app.include_router(documents.router)
     app.include_router(chat.router)
     app.include_router(diagnosis.router)
+
+    # 挂载前端静态资源与首页
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
+    @app.get("/", include_in_schema=False)
+    async def index() -> FileResponse:
+        return FileResponse("static/index.html")
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
