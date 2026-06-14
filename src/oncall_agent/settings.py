@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     retrieval_top_k: int = 3
     chat_max_history: int = 20
 
+    # MCP 服务器(键为服务器名,值为 streamable-http 端点)
+    mcp_monitor_url: str = "http://127.0.0.1:8001/mcp"
+    mcp_logs_url: str = "http://127.0.0.1:8002/mcp"
+
 
 @lru_cache
 def get_settings() -> Settings:

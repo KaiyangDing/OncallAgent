@@ -22,6 +22,7 @@ from oncall_agent.domain.knowledge.retriever import RetrievalService
 from oncall_agent.domain.knowledge.splitter import DocumentSplitter
 from oncall_agent.infra.embeddings import EmbeddingService
 from oncall_agent.infra.llm import create_chat_model
+from oncall_agent.infra.mcp import MCPToolProvider
 from oncall_agent.infra.milvus import MilvusStore
 from oncall_agent.logging import setup_logging
 from oncall_agent.settings import Settings, get_settings
@@ -47,7 +48,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # 装配对话 Agent
     retrieval = RetrievalService(embedding, store, top_k=settings.retrieval_top_k)
-    chat_tools = [make_knowledge_tool(retrieval)]
+    local_tools = [make_knowledge_tool(retrieval)]
+    mcp_provider = MCPToolProvider(settings)
+    mcp_tools = await mcp_provider.get_tools()
+    chat_tools = local_tools + mcp_tools
     chat_model = create_chat_model(settings, streaming=True)
     checkpointer = MemorySaver()
     chat_service = ChatService(

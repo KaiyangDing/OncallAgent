@@ -68,12 +68,26 @@ curl.exe -N -X POST "http://127.0.0.1:8000/api/chat/stream" \
 
 同一 `session_id` 的多轮对话共享上下文;历史超出上限时自动修剪最旧消息。
 
+## MCP 工具服务器
+
+`mcp_servers/` 下是独立运行的 Mock MCP 服务器,提供实时告警、指标、日志查询,
+经 MCP 协议接入 Agent(将来可替换为真实 Prometheus / 日志服务而无需改 Agent)。
+启动主应用前先各开一个终端启动它们(必须用 `-m` 模块方式):
+
+```bash
+uv run python -m mcp_servers.monitor_server   # 告警 + CPU 指标,端口 8001
+uv run python -m mcp_servers.logs_server      # 日志查询,端口 8002
+```
+
+若 MCP 服务器未启动,主应用仍可运行,Agent 自动降级为仅使用本地知识库工具。
+
 ## 里程碑进度
 
 - [x] M0 仓库初始化(uv + ruff + pytest 工具链)
 - [x] M1 配置与最小可运行服务(settings / 日志 / 应用工厂 / 健康检查 / 统一响应)
 - [x] M2 向量层(嵌入 / Milvus 封装 / 文档分割 / 索引服务 / 上传接口)
 - [x] M3 RAG 对话 Agent(ReAct 循环图 / 知识检索工具 / 多轮记忆 / 消息修剪 / 流式 SSE)
+- [x] M4 Mock MCP 服务器(告警 / 指标 / 日志,故事线对齐 / 失败降级可恢复)
 - [ ] M4 Mock MCP 服务器与工具接入
 - [ ] M5 诊断图(Plan-Execute-Replan)
 - [ ] M6 前端适配与收尾
