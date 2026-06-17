@@ -7,7 +7,7 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from langgraph.checkpoint.memory import MemorySaver
@@ -98,6 +98,14 @@ def create_app() -> FastAPI:
     @app.get("/", include_in_schema=False)
     async def index() -> FileResponse:
         return FileResponse("static/index.html")
+
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+        """客户端错误(主动抛出的 HTTPException)统一转为信封格式,保留原状态码。"""
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=ApiResponse.fail(str(exc.detail)).model_dump(),
+        )
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
