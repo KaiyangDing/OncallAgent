@@ -5,7 +5,7 @@
 
 from functools import lru_cache
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     port: int = 9900
 
     # DashScope(通义千问)
+    # dashscope_api_key: SecretStr  # 必填方案
     dashscope_api_key: SecretStr = Field(default=SecretStr(""))
     dashscope_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     chat_model: str = "qwen-max"
@@ -50,6 +51,18 @@ class Settings(BaseSettings):
     # MCP 服务器(键为服务器名,值为 streamable-http 端点)
     mcp_monitor_url: str = "http://127.0.0.1:8001/mcp"
     mcp_logs_url: str = "http://127.0.0.1:8002/mcp"
+
+    # 校验器方案
+    @field_validator("dashscope_api_key")
+    @classmethod
+    def _require_api_key(cls, v: SecretStr) -> SecretStr:
+        """启动时校验:API key 必须非空,否则拒绝启动并明确报错。"""
+        if not v.get_secret_value().strip():
+            raise ValueError(
+                "DASHSCOPE_API_KEY 未设置。请在 .env 文件中填入有效的 API key "
+                "(可参考 .env.example)。"
+            )
+        return v
 
 
 @lru_cache
