@@ -51,7 +51,7 @@ PyCharm 用户:将解释器指向 `.venv\Scripts\python.exe`。
 - 健康检查:http://127.0.0.1:8000/health
 - API 文档:http://127.0.0.1:8000/docs
 
-> 也可单独启动某进程,如 `uv run uvicorn oncall_agent.main:create_app --factory,uv run python -m mcp_servers.logs_server,uv run python -m mcp_servers.monitor_server。
+> 也可单独启动某进程,如 `uv run uvicorn oncall_agent.main:create_app --factory`,`uv run python -m mcp_servers.logs_server`,`uv run python -m mcp_servers.monitor_server`。
 > MCP 未启动时主应用仍可运行,Agent 自动降级为仅用本地知识库工具。
 
 ### 建立知识库索引
@@ -118,9 +118,12 @@ tests/              单元测试
 ## 开发
 
 ```bash
-uv run pytest         # 运行测试
-uv run ruff check .   # 代码检查
-uv run ruff format .  # 代码格式化
+uv run pytest                      # 运行全部测试
+uv run pytest -m "not integration" # 只运行单元测试
+uv run pytest -m integration       # 只运行集成测试
+uv run ruff format .               # 代码格式化
+uv run ruff check .                # 代码检查
+uv run ruff check --fix .          # 检查同时修复
 ```
 
 ## 里程碑进度
