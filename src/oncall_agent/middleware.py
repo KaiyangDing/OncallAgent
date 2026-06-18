@@ -12,7 +12,7 @@ from oncall_agent.context import TokenUsage, request_id_var, token_usage_var
 REQUEST_ID_HEADER = "X-Request-ID"
 
 
-async def request_id_middleware(
+async def request_middleware(
     request: Request, call_next: Callable[[Request], Awaitable[Response]]
 ) -> Response:
     """为每个请求设置 request-id 与 token 累加器,并在结束时记录用量。"""

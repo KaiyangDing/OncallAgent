@@ -3,13 +3,13 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from oncall_agent.middleware import REQUEST_ID_HEADER, request_id_middleware
+from oncall_agent.middleware import REQUEST_ID_HEADER, request_middleware
 
 
 def _app_with_middleware() -> FastAPI:
     """构造一个仅含中间件和一个探针路由的最小 app(不依赖 lifespan)。"""
     app = FastAPI()
-    app.middleware("http")(request_id_middleware)
+    app.middleware("http")(request_middleware)
 
     @app.get("/_probe")
     def _probe() -> dict:
