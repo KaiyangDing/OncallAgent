@@ -3,7 +3,7 @@
 全项目统一一种响应信封 ApiResponse,前端只需按一种格式解析。
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ApiResponse[T](BaseModel):
@@ -47,8 +47,10 @@ class DocumentIndexedData(BaseModel):
 class ChatRequest(BaseModel):
     """对话请求。"""
 
-    session_id: str
-    question: str
+    session_id: str = Field(min_length=1, max_length=128)
+    question: str = Field(min_length=1, max_length=4000)
+
+    model_config = {"str_strip_whitespace": True}
 
 
 class ChatData(BaseModel):

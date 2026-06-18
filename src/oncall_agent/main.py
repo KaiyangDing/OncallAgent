@@ -8,6 +8,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from langgraph.checkpoint.memory import MemorySaver
@@ -105,6 +106,20 @@ def create_app() -> FastAPI:
         return JSONResponse(
             status_code=exc.status_code,
             content=ApiResponse.fail(str(exc.detail)).model_dump(),
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        """请求校验失败(如字段超长)统一转为信封格式,返回 422。"""
+        first = exc.errors()[0] if exc.errors() else {}
+        field = ".".join(str(p) for p in first.get("loc", []) if p != "body")
+        message = first.get("msg", "请求参数校验失败")
+        error = f"{field}: {message}" if field else message
+        return JSONResponse(
+            status_code=422,
+            content=ApiResponse.fail(error).model_dump(),
         )
 
     @app.exception_handler(Exception)
