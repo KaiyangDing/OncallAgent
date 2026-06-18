@@ -21,38 +21,40 @@ MCP 工具协议。本文档只描述**已实现**的内容。
 
 ## 快速开始
 
-### 1. 安装依赖与配置
+需先准备 DashScope API Key:从 [.env.example](.env.example) 复制一份 `.env` 填入 `DASHSCOPE_API_KEY`
+(容器方式则将其设为宿主机环境变量)。
+
+### 方式一:容器化一键启动(推荐)
+
+需安装 Docker。一条命令构建并启动全栈(向量库 + 2 个 MCP 服务 + 主应用):
 
 ```bash
-uv sync                      # 创建虚拟环境并安装全部依赖(含 dev)
-cp .env.example .env         # 填入 DASHSCOPE_API_KEY
+docker compose up --build      # 首次构建较慢;之后 docker compose up -d 即可
+```
+
+`compose` 会按依赖顺序启动 6 个容器(etcd / minio / milvus / monitor / logs / app),
+app 等 milvus 健康后再启动。访问 http://127.0.0.1:8000/ 即可使用。停止:`docker compose down`。
+
+### 方式二:本地开发启动
+
+适合改代码调试。先装依赖,再用 [honcho](https://github.com/nickstenning/honcho) 一键起前台进程:
+
+```bash
+uv sync                  # 创建虚拟环境并安装全部依赖(含 dev)
+docker compose up -d milvus etcd minio   # 仅起向量库
+uv run honcho start      # 一条命令同启 2 个 MCP 服务 + 主应用,Ctrl+C 一并停止
 ```
 
 PyCharm 用户:将解释器指向 `.venv\Scripts\python.exe`。
-
-### 2. 启动向量库
-
-```bash
-docker compose up -d   # Milvus(后台运行,数据持久化到 volumes/)
-```
-
-### 3. 一键启动应用与 MCP 服务
-
-[honcho](https://github.com/nickstenning/honcho) 读取 `Procfile`,用一条命令同时启动两个 MCP
-服务器(8001/8002)与主应用(8000),日志汇总到一个终端,`Ctrl+C` 一并停止:
-
-```bash
-uv run honcho start
-```
 
 - **Web 界面**:http://127.0.0.1:8000/(对话 / 一键诊断 / 上传文档)
 - 健康检查:http://127.0.0.1:8000/health
 - API 文档:http://127.0.0.1:8000/docs
 
-> 单独启动某个进程也可以,例如 `uv run uvicorn oncall_agent.main:create_app --factory`、
-> `uv run python -m mcp_servers.monitor_server`。MCP 未启动时主应用仍可运行,Agent 自动降级为仅用本地知识库工具。
+> 也可单独启动某进程,如 `uv run uvicorn oncall_agent.main:create_app --factory`。
+> MCP 未启动时主应用仍可运行,Agent 自动降级为仅用本地知识库工具。
 
-### 4. 建立知识库索引
+### 建立知识库索引
 
 ```bash
 # 上传单篇
