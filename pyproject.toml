@@ -26,6 +26,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "honcho>=2.0.0",
     "httpx>=0.28.1",
     "pytest>=8.3",
     "pytest-asyncio>=0.25",

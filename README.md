@@ -30,28 +30,27 @@ cp .env.example .env         # 填入 DASHSCOPE_API_KEY
 
 PyCharm 用户:将解释器指向 `.venv\Scripts\python.exe`。
 
-### 2. 启动依赖服务
+### 2. 启动向量库
 
 ```bash
-# 向量库 Milvus(数据持久化到 volumes/)
-docker compose up -d
-
-# MCP 工具服务器(各开一个终端,必须用 -m 模块方式启动)
-uv run python -m mcp_servers.monitor_server   # 告警 + CPU 指标,端口 8001
-uv run python -m mcp_servers.logs_server      # 日志查询,端口 8002
+docker compose up -d   # Milvus(后台运行,数据持久化到 volumes/)
 ```
 
-> MCP 服务器未启动时主应用仍可运行,Agent 自动降级为仅使用本地知识库工具。
+### 3. 一键启动应用与 MCP 服务
 
-### 3. 启动主应用
+[honcho](https://github.com/nickstenning/honcho) 读取 `Procfile`,用一条命令同时启动两个 MCP
+服务器(8001/8002)与主应用(8000),日志汇总到一个终端,`Ctrl+C` 一并停止:
 
 ```bash
-uv run uvicorn oncall_agent.main:create_app --factory
+uv run honcho start
 ```
 
 - **Web 界面**:http://127.0.0.1:8000/(对话 / 一键诊断 / 上传文档)
 - 健康检查:http://127.0.0.1:8000/health
 - API 文档:http://127.0.0.1:8000/docs
+
+> 单独启动某个进程也可以,例如 `uv run uvicorn oncall_agent.main:create_app --factory`、
+> `uv run python -m mcp_servers.monitor_server`。MCP 未启动时主应用仍可运行,Agent 自动降级为仅用本地知识库工具。
 
 ### 4. 建立知识库索引
 
