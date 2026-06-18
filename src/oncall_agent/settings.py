@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     milvus_port: int = 19530
     milvus_collection: str = "knowledge"
 
+    # 会话持久化(SQLite checkpointer)
+    checkpoint_db: str = "data/checkpoints.db"
+
     # 文档分割
     chunk_size: int = 800
     chunk_overlap: int = 100

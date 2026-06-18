@@ -36,7 +36,7 @@ class ChatService:
         """非流式对话:返回完整回答。"""
         async with track_token_usage():
             result = await self._agent.ainvoke(
-                self._build_input(question, session_id),
+                await self._build_input(question, session_id),
                 config=self._config(session_id),
             )
             return result["messages"][-1].content
@@ -45,7 +45,7 @@ class ChatService:
         """流式对话:逐块产出回答文本片段。"""
         async with track_token_usage():
             async for chunk, _metadata in self._agent.astream(
-                self._build_input(question, session_id),
+                await self._build_input(question, session_id),
                 config=self._config(session_id),
                 stream_mode="messages",
             ):
@@ -68,17 +68,17 @@ class ChatService:
                     parts.append(block)
         return "".join(parts)
 
-    def _build_input(self, question: str, session_id: str) -> dict:
+    async def _build_input(self, question: str, session_id: str) -> dict:
         """构造图输入:首轮带系统提示,后续仅追加用户消息。"""
         messages: list[BaseMessage] = []
-        if self._is_new_session(session_id):
+        if await self._is_new_session(session_id):
             messages.append(SystemMessage(content=SYSTEM_PROMPT))
         messages.append(HumanMessage(content=question))
         return {"messages": messages}
 
-    def _is_new_session(self, session_id: str) -> bool:
+    async def _is_new_session(self, session_id: str) -> bool:
         """该会话是否尚无历史(决定是否需要注入系统提示)。"""
-        state = self._agent.get_state(self._config(session_id))
+        state = await self._agent.aget_state(self._config(session_id))
         return not state.values.get("messages")
 
     @staticmethod

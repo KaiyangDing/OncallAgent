@@ -6,12 +6,13 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from loguru import logger
 
 from oncall_agent.api import chat, diagnosis, documents, health
@@ -57,23 +58,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     mcp_tools = await mcp_provider.get_tools()
     chat_tools = local_tools + mcp_tools
     chat_model = create_chat_model(settings, streaming=True)
-    checkpointer = MemorySaver()
-    chat_service = ChatService(
-        chat_model, chat_tools, checkpointer, max_history=settings.chat_max_history
-    )
-
-    # 装配诊断 Agent(复用同一套工具与检索;诊断不需要流式模型与会话记忆)
     diagnosis_model = create_chat_model(settings, streaming=False)
     diagnosis_service = DiagnosisService(diagnosis_model, chat_tools, retrieval)
 
-    app.state.resources = AppResources(
-        indexing_service=indexing_service,
-        chat_service=chat_service,
-        diagnosis_service=diagnosis_service,
-    )
-    logger.info("资源装配完成")
+    # 会话持久化:SQLite checkpointer(随应用生命周期打开/关闭)
+    Path(settings.checkpoint_db).parent.mkdir(parents=True, exist_ok=True)
+    async with AsyncSqliteSaver.from_conn_string(settings.checkpoint_db) as checkpointer:
+        chat_service = ChatService(
+            chat_model, chat_tools, checkpointer, max_history=settings.chat_max_history
+        )
 
-    yield
+        app.state.resources = AppResources(
+            indexing_service=indexing_service,
+            chat_service=chat_service,
+            diagnosis_service=diagnosis_service,
+        )
+        logger.info("资源装配完成")
+
+        yield  # 注意:yield 现在在 async with 内部!
 
     store.close()
     logger.info("{} 已关闭", settings.app_name)
