@@ -10,6 +10,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DASHSCOPE_API_KEY: "sk-test-key-for-ci"
     steps:
       # 1. 拉取仓库代码
       - name: 检出代码
