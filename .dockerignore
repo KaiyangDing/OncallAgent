@@ -1,0 +1,22 @@
+# 虚拟环境与密钥
+.venv/
+.env
+
+# 运行时数据
+volumes/
+data/
+logs/
+uploads/
+
+# 版本控制与缓存
+.git/
+.github/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# IDE 与测试
+.idea/
+.vscode/
+tests/

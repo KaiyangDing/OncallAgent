@@ -58,3 +58,32 @@ services:
     depends_on:
       - etcd
       - minio
+
+  monitor:
+    container_name: oncall-monitor
+    build: .
+    command: [ "uv", "run", "python", "-m", "mcp_servers.monitor_server" ]
+    ports:
+      - "8001:8001"
+
+  logs:
+    container_name: oncall-logs
+    build: .
+    command: [ "uv", "run", "python", "-m", "mcp_servers.logs_server" ]
+    ports:
+      - "8002:8002"
+
+  app:
+    container_name: oncall-app
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # 容器间用服务名通信(覆盖 settings 里的 localhost 默认值)
+      MILVUS_HOST: milvus
+      MCP_MONITOR_URL: http://monitor:8001/mcp
+      MCP_LOGS_URL: http://logs:8002/mcp
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+    depends_on:
+      milvus:
+        condition: service_healthy
