@@ -3,16 +3,20 @@
 import json
 from collections.abc import AsyncIterator
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sse_starlette.sse import EventSourceResponse
 
 from oncall_agent.dependencies import AppResources, get_resources
+from oncall_agent.rate_limit import limiter
+from oncall_agent.settings import get_settings
 
 router = APIRouter(prefix="/api/diagnosis", tags=["diagnosis"])
 
 
 @router.post("")
+@limiter.limit(lambda: get_settings().rate_limit)
 async def diagnose(
+    request: Request,
     resources: AppResources = Depends(get_resources),
 ) -> EventSourceResponse:
     """触发自动诊断,以 SSE 推送 plan / step / report 事件。"""

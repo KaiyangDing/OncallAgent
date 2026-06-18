@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from loguru import logger
+from slowapi.errors import RateLimitExceeded
 
 from oncall_agent.api import chat, diagnosis, documents, health
 from oncall_agent.api.schemas import ApiResponse
@@ -30,6 +31,7 @@ from oncall_agent.infra.mcp import MCPToolProvider
 from oncall_agent.infra.milvus import MilvusStore
 from oncall_agent.logging import setup_logging
 from oncall_agent.middleware import request_middleware
+from oncall_agent.rate_limit import limiter
 from oncall_agent.settings import Settings, get_settings
 
 
@@ -102,12 +104,25 @@ def create_app() -> FastAPI:
     app.include_router(chat.router)
     app.include_router(diagnosis.router)
 
+    # 限流器挂载到 app
+    app.state.limiter = limiter
+
     # 挂载前端静态资源与首页
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
     @app.get("/", include_in_schema=False)
     async def index() -> FileResponse:
         return FileResponse("static/index.html")
+
+    @app.exception_handler(RateLimitExceeded)
+    async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+        """超过限流阈值,返回统一信封的 429。"""
+        return JSONResponse(
+            status_code=429,
+            content=ApiResponse.fail(
+                f"请求过于频繁,请稍后再试(限制:{exc.limit.limit})"
+            ).model_dump(),
+        )
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:

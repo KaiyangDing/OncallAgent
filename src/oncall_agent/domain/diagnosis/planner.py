@@ -30,9 +30,20 @@ def make_planner(model: ChatQwen, tools: list[BaseTool], retrieval: RetrievalSer
         task = state["task"]
         experience = retrieval.retrieve(task)
 
-        plan: Plan = await planner_chain.ainvoke(
+        plan: Plan | None = await planner_chain.ainvoke(
             {"task": task, "experience": experience, "tools": tools_desc}
         )
+
+        if plan is None or not plan.steps:
+            logger.warning("Planner 未能生成有效计划,使用默认诊断步骤")
+            return {
+                "plan": [
+                    "使用 query_active_alerts 查询当前活动告警",
+                    "针对告警涉及的服务,查询其指标与日志",
+                    "检索知识库获取处理建议,综合生成诊断报告",
+                ]
+            }
+
         logger.info("诊断计划已制定,共 {} 步", len(plan.steps))
         return {"plan": plan.steps}
 

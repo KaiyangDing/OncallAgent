@@ -56,6 +56,9 @@ class Settings(BaseSettings):
     mcp_monitor_url: str = "http://127.0.0.1:8001/mcp"
     mcp_logs_url: str = "http://127.0.0.1:8002/mcp"
 
+    # 限流(按 IP,每分钟最大请求数)
+    rate_limit: str = "10/minute"
+
     # 校验器方案
     @field_validator("dashscope_api_key")
     @classmethod
