@@ -134,5 +134,4 @@ def create_app() -> FastAPI:
     return app
 
 
-# uvicorn 入口:oncall_agent.main:app
-app = create_app()
+# uvicorn 启动入口(工厂模式):uvicorn oncall_agent.main:create_app --factory

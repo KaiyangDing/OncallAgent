@@ -46,7 +46,7 @@ uv run python -m mcp_servers.logs_server      # 日志查询,端口 8002
 ### 3. 启动主应用
 
 ```bash
-uv run uvicorn oncall_agent.main:app --reload
+uv run uvicorn oncall_agent.main:create_app --factory
 ```
 
 - **Web 界面**:http://127.0.0.1:8000/(对话 / 一键诊断 / 上传文档)
