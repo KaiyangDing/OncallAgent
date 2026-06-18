@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     # RAG 检索
     retrieval_top_k: int = 3
     chat_max_history: int = 20
+    retrieval_score_threshold: float = 0.5
 
     # MCP 服务器(键为服务器名,值为 streamable-http 端点)
     mcp_monitor_url: str = "http://127.0.0.1:8001/mcp"

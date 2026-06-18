@@ -52,7 +52,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     indexing_service = IndexingService(splitter, embedding, store)
 
     # 装配对话 Agent
-    retrieval = RetrievalService(embedding, store, top_k=settings.retrieval_top_k)
+    retrieval = RetrievalService(
+        embedding,
+        store,
+        top_k=settings.retrieval_top_k,
+        score_threshold=settings.retrieval_score_threshold,
+    )
     local_tools = [make_knowledge_tool(retrieval)]
     mcp_provider = MCPToolProvider(settings)
     mcp_tools = await mcp_provider.get_tools()
