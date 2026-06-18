@@ -5,6 +5,7 @@ from collections.abc import AsyncIterator
 from langchain_core.tools import BaseTool
 from langchain_qwq import ChatQwen
 
+from oncall_agent.callbacks import TokenUsageCallback
 from oncall_agent.domain.diagnosis.graph import build_diagnosis_graph
 from oncall_agent.domain.knowledge.retriever import RetrievalService
 
@@ -26,7 +27,8 @@ class DiagnosisService:
         """运行一次诊断,产出过程事件(plan / step / report)。"""
         initial: dict = {"task": _DIAGNOSIS_TASK, "plan": [], "past_steps": [], "report": ""}
 
-        async for chunk in self._graph.astream(initial, stream_mode="updates"):
+        config = {"callbacks": [TokenUsageCallback()]}
+        async for chunk in self._graph.astream(initial, stream_mode="updates", config=config):
             for node_name, update in chunk.items():
                 event = self._to_event(node_name, update)
                 if event is not None:

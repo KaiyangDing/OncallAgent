@@ -13,6 +13,7 @@ from langchain_core.tools import BaseTool
 from langchain_qwq import ChatQwen
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
+from oncall_agent.callbacks import TokenUsageCallback
 from oncall_agent.domain.chat.graph import build_chat_graph
 from oncall_agent.domain.chat.prompts import SYSTEM_PROMPT
 
@@ -80,4 +81,7 @@ class ChatService:
     @staticmethod
     def _config(session_id: str) -> dict:
         """LangGraph 配置:用 session_id 作为 thread_id 隔离会话。"""
-        return {"configurable": {"thread_id": session_id}}
+        return {
+            "configurable": {"thread_id": session_id},
+            "callbacks": [TokenUsageCallback()],
+        }
