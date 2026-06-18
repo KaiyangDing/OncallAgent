@@ -8,6 +8,7 @@ import sys
 
 from loguru import logger
 
+from oncall_agent.context import request_id_var
 from oncall_agent.settings import Settings
 
 
@@ -19,6 +20,9 @@ def setup_logging(settings: Settings) -> None:
     """
     logger.remove()
 
+    # 每条日志自动注入当前请求的 request-id(无请求上下文时为 "-")
+    logger.configure(patcher=lambda record: record["extra"].update(request_id=request_id_var.get()))
+
     level = "DEBUG" if settings.debug else "INFO"
 
     # 控制台:带颜色,便于本地开发
@@ -28,6 +32,7 @@ def setup_logging(settings: Settings) -> None:
         format=(
             "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
             "<level>{level: <8}</level> | "
+            "<magenta>{extra[request_id]}</magenta> | "
             "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
             "<level>{message}</level>"
         ),
@@ -46,7 +51,10 @@ def setup_logging(settings: Settings) -> None:
         enqueue=True,
         backtrace=True,
         diagnose=settings.debug,
-        format=("{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}"),
+        format=(
+            "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | "
+            "{extra[request_id]} | {name}:{function}:{line} | {message}"
+        ),
     )
 
     logger.info("日志系统初始化完成,级别={}", level)

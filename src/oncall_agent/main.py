@@ -28,6 +28,7 @@ from oncall_agent.infra.llm import create_chat_model
 from oncall_agent.infra.mcp import MCPToolProvider
 from oncall_agent.infra.milvus import MilvusStore
 from oncall_agent.logging import setup_logging
+from oncall_agent.middleware import request_id_middleware
 from oncall_agent.settings import Settings, get_settings
 
 
@@ -88,6 +89,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    app.middleware("http")(request_id_middleware)
     app.include_router(health.router)
     app.include_router(documents.router)
     app.include_router(chat.router)
