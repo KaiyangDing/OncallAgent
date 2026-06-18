@@ -101,18 +101,24 @@ SSE 推送计划、每步执行结果与最终报告。诊断图四个节点:
 
 ```
 src/oncall_agent/
-├── api/            接口层:health / documents / chat / diagnosis 路由,统一响应契约
-├── domain/         业务层
-│   ├── knowledge/  文档分割、索引、检索
-│   ├── chat/       ReAct 对话图、工具、会话服务
-│   └── diagnosis/  Plan-Execute-Replan 诊断图各节点
-├── infra/          基础设施:llm / milvus / embeddings / mcp
-├── main.py         应用工厂 + lifespan(资源装配)
-├── settings.py     配置(pydantic-settings)
-└── dependencies.py 依赖注入容器
-mcp_servers/        独立运行的 Mock MCP 服务器(告警/指标/日志)
-knowledge_docs/     运维知识库种子文档
-tests/              单元测试
+├── main.py          应用工厂 create_app() + lifespan(资源装配,所有有状态资源在此构造注入)
+├── settings.py      pydantic-settings 配置(SecretStr 护 key,field_validator 校验,环境变量可覆盖)
+├── logging.py       loguru,setup_logging(settings) 显式初始化无副作用,patcher 注入 request-id
+├── dependencies.py  AppResources 容器 + get_resources(FastAPI 依赖注入)
+├── context.py       contextvar:request_id_var + token_usage_var/TokenUsage + track_token_usage()
+├── middleware.py    request_middleware:每请求设 request-id 写响应头
+├── callbacks.py     TokenUsageCallback:on_llm_end 累加 token 到 contextvar
+├── rate_limit.py    slowapi Limiter(按 IP)
+├── api/             health/documents/chat/diagnosis 路由 + schemas.py(统一 ApiResponse[T] 信封 PEP695泛型)
+├── domain/
+│   ├── knowledge/   splitter(三阶段分割,同h1才合并)/ indexer(切块→嵌入→先删后插)/ retriever(检索+阈值过滤)/ models
+│   ├── chat/        graph(手搭 ReAct: trim→model⇄tools)/ service(编译图+注入checkpointer+thread_id多轮记忆)/ tools(闭包工厂)/ prompts
+│   └── diagnosis/   state(operator.add累积past_steps)/ planner(检索经验+真实工具清单,None兜底)/ executor(手写ReAct循环+past_steps上下文+未知工具容错)/ replanner(三态决策Literal+MAX_STEPS护栏)/ reporter(直出Markdown不用结构化输出)/ graph(条件边按plan空否路由)/ service / prompts
+│   └── infra/       llm(create_chat_model工厂)/ milvus(MilvusClient封装,insert/delete后flush)/ embeddings / mcp(MCPToolProvider加载+缓存+失败降级可恢复)
+mcp_servers/         独立运行的 mock MCP:monitor(query_active_alerts+query_cpu_metrics)/ logs(search_logs)/ _fixtures(故事线剧本:HighCPUUsage@data-sync-service,CPU爬升曲线,同步堆积日志——三者讲同一故事)
+knowledge_docs/      5篇运维知识文档(cpu/disk/memory/service_unavailable/slow_response)
+tests/unit + tests/integration(@integration标记,CI跳过)
+Dockerfile + .dockerignore + docker-compose.yml(全栈容器化) + Procfile(honcho) + .github/workflows/ci.yml
 ```
 
 ## 开发
