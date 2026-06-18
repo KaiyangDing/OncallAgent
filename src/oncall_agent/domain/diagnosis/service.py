@@ -6,6 +6,7 @@ from langchain_core.tools import BaseTool
 from langchain_qwq import ChatQwen
 
 from oncall_agent.callbacks import TokenUsageCallback
+from oncall_agent.context import track_token_usage
 from oncall_agent.domain.diagnosis.graph import build_diagnosis_graph
 from oncall_agent.domain.knowledge.retriever import RetrievalService
 
@@ -28,11 +29,12 @@ class DiagnosisService:
         initial: dict = {"task": _DIAGNOSIS_TASK, "plan": [], "past_steps": [], "report": ""}
 
         config = {"callbacks": [TokenUsageCallback()]}
-        async for chunk in self._graph.astream(initial, stream_mode="updates", config=config):
-            for node_name, update in chunk.items():
-                event = self._to_event(node_name, update)
-                if event is not None:
-                    yield event
+        async with track_token_usage():
+            async for chunk in self._graph.astream(initial, stream_mode="updates", config=config):
+                for node_name, update in chunk.items():
+                    event = self._to_event(node_name, update)
+                    if event is not None:
+                        yield event
 
     @staticmethod
     def _to_event(node_name: str, update: dict) -> dict | None:

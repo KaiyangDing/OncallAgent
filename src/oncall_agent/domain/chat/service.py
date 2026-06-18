@@ -14,6 +14,7 @@ from langchain_qwq import ChatQwen
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from oncall_agent.callbacks import TokenUsageCallback
+from oncall_agent.context import track_token_usage
 from oncall_agent.domain.chat.graph import build_chat_graph
 from oncall_agent.domain.chat.prompts import SYSTEM_PROMPT
 
@@ -33,21 +34,23 @@ class ChatService:
 
     async def chat(self, question: str, session_id: str) -> str:
         """非流式对话:返回完整回答。"""
-        result = await self._agent.ainvoke(
-            self._build_input(question, session_id),
-            config=self._config(session_id),
-        )
-        return result["messages"][-1].content
+        async with track_token_usage():
+            result = await self._agent.ainvoke(
+                self._build_input(question, session_id),
+                config=self._config(session_id),
+            )
+            return result["messages"][-1].content
 
     async def chat_stream(self, question: str, session_id: str) -> AsyncIterator[str]:
         """流式对话:逐块产出回答文本片段。"""
-        async for chunk, _metadata in self._agent.astream(
-            self._build_input(question, session_id),
-            config=self._config(session_id),
-            stream_mode="messages",
-        ):
-            if isinstance(chunk, AIMessageChunk) and chunk.content:
-                yield self._extract_text(chunk.content)
+        async with track_token_usage():
+            async for chunk, _metadata in self._agent.astream(
+                self._build_input(question, session_id),
+                config=self._config(session_id),
+                stream_mode="messages",
+            ):
+                if isinstance(chunk, AIMessageChunk) and chunk.content:
+                    yield self._extract_text(chunk.content)
 
     @staticmethod
     def _extract_text(content: object) -> str:
