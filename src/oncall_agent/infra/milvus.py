@@ -76,6 +76,7 @@ class MilvusStore:
             for id_, vector, text, source in zip(ids, vectors, texts, sources, strict=True)
         ]
         self.client.upsert(collection_name=self._collection, data=rows)
+        self.client.flush(self._collection)
 
     def search(self, query_vector: list[float], top_k: int) -> list[dict]:
         """向量相似度检索,返回 top_k 个最相近的块。
@@ -104,6 +105,7 @@ class MilvusStore:
             collection_name=self._collection,
             filter=f'{self.FIELD_SOURCE} == "{source}"',
         )
+        self.client.flush(self._collection)
 
     def close(self) -> None:
         """关闭连接。"""
